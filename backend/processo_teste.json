@@ -1,0 +1,8 @@
+{
+  "cliente": "8e048ae5-8fcd-4feb-acbc-14134c2c0616",
+  "numero_processo": "0001234-56.2026.8.10.0040",
+  "area_juridica": "civel",
+  "status": "ativo",
+  "comarca_vara": "1a Vara Civel de Imperatriz",
+  "descricao": "Processo de teste criado via API"
+}

@@ -1,0 +1,9 @@
+{
+  "tipo": "audiencia",
+  "titulo": "Audiencia de conciliacao - Processo teste",
+  "processo": "d9e186a6-17e3-4b83-8e52-52dacd2f646b",
+  "cliente": "8e048ae5-8fcd-4feb-acbc-14134c2c0616",
+  "local": "Forum de Imperatriz",
+  "data_hora_inicio": "2026-08-15T14:00:00-03:00",
+  "status": "agendado"
+}
