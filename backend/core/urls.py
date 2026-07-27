@@ -10,4 +10,7 @@ urlpatterns = [
     path("estatisticas/", views.EstatisticasView.as_view(), name="estatisticas"),
     path("notificacoes/", views.NotificacaoListView.as_view(), name="notificacao-list"),
     path("notificacoes/<uuid:pk>/lida/", views.NotificacaoMarcarLidaView.as_view(), name="notificacao-marcar-lida"),
+    path("clientes/<uuid:pk>/ficha-pdf/", views.FichaClientePDFView.as_view(), name="cliente-ficha-pdf"),
+    path("relatorios/clientes/", views.RelatorioClientesView.as_view(), name="relatorio-clientes"),
+    path("relatorios/processos/", views.RelatorioProcessosView.as_view(), name="relatorio-processos"),
 ]

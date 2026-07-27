@@ -1,4 +1,5 @@
 from django.db.models import Q, Count
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from rest_framework.generics import (
     ListCreateAPIView,
@@ -18,6 +19,14 @@ from atendimento.models import Atendimento
 from prazos.models import Prazo
 
 from .models import Escritorio, Notificacao
+from .pdf_ficha_cliente import gerar_pdf_ficha_cliente
+from .relatorios import (
+    FORMATOS_VALIDOS,
+    gerar_relatorio_clientes,
+    gerar_relatorio_processos,
+    content_type_para,
+    extensao_para,
+)
 from .serializers import (
     EscritorioSerializer,
     ConfiguracoesEscritorioSerializer,
@@ -202,3 +211,99 @@ class NotificacaoMarcarLidaView(APIView):
         notificacao.lida = True
         notificacao.save()
         return Response(NotificacaoSerializer(notificacao).data)
+
+
+class FichaClientePDFView(APIView):
+    """
+    PDF Automático — gera a ficha do cliente em PDF, restrito ao
+    escritório do usuário logado.
+
+    GET /api/escritorios/clientes/<uuid:pk>/ficha-pdf/
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            cliente = Cliente.objects.get(pk=pk, escritorio=request.user.escritorio)
+        except Cliente.DoesNotExist:
+            return Response({"detail": "Cliente não encontrado."}, status=404)
+
+        buffer = gerar_pdf_ficha_cliente(cliente)
+
+        nome_arquivo = f"ficha-cliente-{cliente.nome.strip().replace(' ', '-').lower()}.pdf"
+
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename=nome_arquivo,
+            content_type="application/pdf",
+        )
+
+
+def _validar_formato(request):
+    formato = request.query_params.get("formato", "excel").lower()
+    if formato not in FORMATOS_VALIDOS:
+        return None, Response(
+            {"detail": f"Formato inválido. Use um de: {', '.join(FORMATOS_VALIDOS)}."},
+            status=400,
+        )
+    return formato, None
+
+
+class RelatorioClientesView(APIView):
+    """
+    Relatórios/Exportação — exporta a lista de Clientes do escritório
+    do usuário logado.
+
+    GET /api/escritorios/relatorios/clientes/?formato=excel|csv|pdf
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        formato, erro = _validar_formato(request)
+        if erro:
+            return erro
+
+        escritorio = request.user.escritorio
+        clientes_qs = Cliente.objects.filter(escritorio=escritorio).order_by("nome")
+
+        buffer = gerar_relatorio_clientes(clientes_qs, formato, escritorio.nome)
+
+        nome_arquivo = f"relatorio-clientes.{extensao_para(formato)}"
+
+        response = HttpResponse(buffer.read(), content_type=content_type_para(formato))
+        response["Content-Disposition"] = f'attachment; filename="{nome_arquivo}"'
+        return response
+
+
+class RelatorioProcessosView(APIView):
+    """
+    Relatórios/Exportação — exporta a lista de Processos do escritório
+    do usuário logado.
+
+    GET /api/escritorios/relatorios/processos/?formato=excel|csv|pdf
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        formato, erro = _validar_formato(request)
+        if erro:
+            return erro
+
+        escritorio = request.user.escritorio
+        processos_qs = (
+            Processo.objects.filter(escritorio=escritorio)
+            .select_related("cliente", "advogado_responsavel")
+            .order_by("-criado_em")
+        )
+
+        buffer = gerar_relatorio_processos(processos_qs, formato, escritorio.nome)
+
+        nome_arquivo = f"relatorio-processos.{extensao_para(formato)}"
+
+        response = HttpResponse(buffer.read(), content_type=content_type_para(formato))
+        response["Content-Disposition"] = f'attachment; filename="{nome_arquivo}"'
+        return response
