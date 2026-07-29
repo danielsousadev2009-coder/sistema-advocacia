@@ -21,6 +21,19 @@ class Processo(models.Model):
         ARQUIVADO = 'arquivado', 'Arquivado'
         ENCERRADO = 'encerrado', 'Encerrado'
 
+    class EtapaKanban(models.TextChoices):
+        """
+        Etapa operacional do fluxo de trabalho interno do escritório
+        (independente do 'status' jurídico do processo, acima).
+        Usada para montar o quadro Kanban.
+        """
+        NOVO_CLIENTE = 'novo_cliente', 'Novo Cliente'
+        ATENDIMENTO = 'atendimento', 'Atendimento'
+        DOCUMENTACAO = 'documentacao', 'Documentação'
+        PROCESSO = 'processo', 'Processo'
+        AUDIENCIA = 'audiencia', 'Audiência'
+        FINALIZADO = 'finalizado', 'Finalizado'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     escritorio = models.ForeignKey(
         'core.Escritorio', on_delete=models.CASCADE, related_name='processos'
@@ -31,6 +44,9 @@ class Processo(models.Model):
     numero_processo = models.CharField(max_length=50, blank=True)
     area_juridica = models.CharField(max_length=20, choices=AreaJuridica.choices)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ATIVO)
+    etapa_kanban = models.CharField(
+        max_length=20, choices=EtapaKanban.choices, default=EtapaKanban.NOVO_CLIENTE
+    )
     advogado_responsavel = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='processos_responsavel',

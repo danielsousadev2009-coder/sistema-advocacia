@@ -1,0 +1,25 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.egg-info/
+
+# Django
+*.log
+db.sqlite3
+media/
+
+# Ambiente
+.env
+
+# Cookies/tokens de teste (nunca commitar)
+cookies.txt
+
+# Arquivos de teste de payload (curl)
+*.json
+!package.json
+
+# IDE
+.vscode/
+.idea/
